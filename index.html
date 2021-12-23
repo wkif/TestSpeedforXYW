@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Speed monitoring of campus network of a university in south China </title>
+    <!-- 引入 echarts.js -->
+    <script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/layui/2.6.8/layui.js"
+      integrity="sha512-lH7rGfsFWwehkeyJYllBq73IsiR7RH2+wuOVjr06q8NKwHp5xVnkdSvUm8RNt31QCROqtPrjAAd1VuNH0ISxqQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/layui/2.6.8/css/layui.min.css"
+      integrity="sha512-iQBJbsNHXUcgEIgWThd2dr8tOdKPvICwqjPEZYY81z3eMya44A5MiAqfWSCh+Ee1YzNYkdrI982Qhwgr8LEYOQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body onload="kif()">
+    <div class="nav">
+      <ul class="layui-nav">
+        <li class="layui-nav-item">
+          Speed monitoring of campus network of a university in south China
+        </li>
+        <li class="layui-nav-item" style="margin-left: 70%">
+          <a onclick="getData()"> refresh</a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="layui-panel" style="background-color: #2d2e36">
+      <!-- <div style="width: 370px; margin: 0">
+        <button
+          type="button"
+          class="layui-btn layui-btn-fluid"
+          onclick="getData()"
+        >
+          refresh
+        </button>
+      </div> -->
+      <div style="padding: 10px 30px">
+        <div id="speed1" style="width: 100%; height: 400px"></div>
+      </div>
+      <div style="padding: 60px 30px">
+        <div id="speed2" style="width: 100%; height: 400px"></div>
+      </div>
+    </div>
+    <div><a href="https://wkif-github-io.vercel.app/">kifroom</a></div>
+    <!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+
+    <script type="text/javascript">
+      let Data = [];
+
+      function getData() {
+        $.ajax({
+          //提交数据的类型 POST GET
+          type: "GET",
+          //提交的网址
+          url: "http://127.0.0.1:8000/api",
+
+          //返回数据的格式
+          datatype: "json", //"xml", "html", "script", "json", "jsonp", "text".
+
+          //成功返回之后调用的函数
+          success: function (data) {
+            Data = data;
+            // console.log(Data);
+            speed();
+            Website_response_timeSpeed();
+          },
+
+          //调用出错执行的函数
+          error: function () {
+            //请求出错处理
+          },
+        });
+      }
+
+      function speed() {
+        Xdata = [];
+        download_speed = [];
+        upload_speed = [];
+        for (i = 0; i < Data.length; i++) {
+          Xdata[i] = Data[i].time;
+          download_speed[i] = parseInt(Data[i].download_speed);
+          upload_speed[i] = parseInt(Data[i].upload_speed);
+        }
+        var chartDom = document.getElementById("speed1");
+        var myChart = echarts.init(chartDom, "dark");
+        var option;
+        option = {
+          title: {
+            text: "Upload and download speed",
+            left: "center",
+          },
+          tooltip: {
+            trigger: "axis",
+            axisPointer: {
+              animation: false,
+            },
+          },
+          legend: {
+            data: ["upload_speed", "download_speed"],
+            left: 10,
+          },
+          toolbox: {
+            feature: {
+              dataZoom: {
+                yAxisIndex: "none",
+              },
+              restore: {},
+              saveAsImage: {},
+            },
+          },
+          axisPointer: {
+            link: [
+              {
+                xAxisIndex: "all",
+              },
+            ],
+          },
+          dataZoom: [
+            {
+              show: true,
+              realtime: true,
+              start: 30,
+              end: 70,
+              xAxisIndex: [0, 1],
+            },
+            {
+              type: "inside",
+              realtime: true,
+              start: 30,
+              end: 70,
+              xAxisIndex: [0, 1],
+            },
+          ],
+          grid: [
+            {
+              left: 60,
+              right: 50,
+              height: "35%",
+            },
+            {
+              left: 60,
+              right: 50,
+              top: "55%",
+              height: "35%",
+            },
+          ],
+          xAxis: [
+            {
+              type: "category",
+              boundaryGap: false,
+              axisLine: { onZero: true },
+              data: Xdata,
+            },
+            {
+              gridIndex: 1,
+              type: "category",
+              boundaryGap: false,
+              axisLine: { onZero: true },
+              data: Xdata,
+              position: "top",
+            },
+          ],
+          yAxis: [
+            {
+              name: "Mbs",
+              type: "value",
+           
+            },
+            {
+              gridIndex: 1,
+              name: "Mbs",
+              type: "value",
+              inverse: true,
+            },
+          ],
+          series: [
+            {
+              name: "upload_speed",
+              type: "line",
+              color: {
+                type: "radial",
+                x: 0.5,
+                y: 0.5,
+                r: 0.5,
+                colorStops: [
+                  {
+                    offset: 0,
+                    color: "red", // 0% 处的颜色
+                  },
+                  {
+                    offset: 1,
+                    color: "blue", // 100% 处的颜色
+                  },
+                ],
+                global: false, // 缺省为 false
+              },
+              symbolSize: 8,
+              // prettier-ignore
+              data:upload_speed,
+            },
+            {
+              name: "download_speed",
+              type: "line",
+              color: {
+                type: "linear",
+                x: 0,
+                y: 0,
+                x2: 0,
+                y2: 1,
+                colorStops: [
+                  {
+                    offset: 0,
+                    color: "red", // 0% 处的颜色
+                  },
+                  {
+                    offset: 1,
+                    color: "blue", // 100% 处的颜色
+                  },
+                ],
+                global: false, // 缺省为 false
+              },
+              xAxisIndex: 1,
+              yAxisIndex: 1,
+              symbolSize: 8,
+              // prettier-ignore
+              data: download_speed,
+            },
+          ],
+        };
+
+        option && myChart.setOption(option);
+      }
+
+      function Website_response_timeSpeed() {
+         if (Data.length>7){
+            Data = Data.slice(7);
+         }
+        
+        Xdata = [];
+        UrlList = [];
+        for (q = 0; q < Data[0].Website_response_time.length; q++) {
+          UrlList[q] = Data[0].Website_response_time[q].url;
+        }
+        for (i = 0; i < Data.length; i++) {
+          Xdata[i] = Data[i].time;
+        }
+        Datalist = [];
+        for (j = 0; j < UrlList.length; j++) {
+          dataSpList = [];
+          for (i = 0; i < Data.length; i++) {
+            dataSpList[i] = Data[i].Website_response_time[j].time;
+          }
+          obj = {
+            name: UrlList[j],
+            type: "line",
+            // stack: "Total",
+            data: dataSpList,
+          };
+          Datalist.push(obj);
+        }
+        // console.log(Datalist);
+
+        var chartDom = document.getElementById("speed2");
+        var myChart = echarts.init(chartDom, "dark");
+        var option;
+
+        option = {
+          title: {
+            text: "Web Page Launch Speed",
+             left: "center",
+          },
+          tooltip: {
+            trigger: "axis",
+          },
+          legend: {
+            data: UrlList,
+            x:'center',
+            y:'bottom'
+          },
+          grid: {
+            left: "3%",
+            right: "4%",
+            bottom: "3%",
+            containLabel: true,
+          },
+          toolbox: {
+            feature: {
+              saveAsImage: {},
+            },
+          },
+          xAxis: {
+            type: "category",
+            boundaryGap: true,
+            data: Xdata,
+          },
+          yAxis: {
+            name: "s",
+            type: "value",
+          },
+          series: Datalist,
+        };
+
+        option && myChart.setOption(option);
+      }
+      function kif() {
+        getData();
+        setInterval(getData, 10000);
+      }
+    </script>
+  </body>
+</html>
